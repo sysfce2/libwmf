@@ -33,6 +33,7 @@
 #include "wmfdefs.h"
 #include "metadefs.h"
 
+#include <stdint.h>
 #include "player.h"
 #include "player/region.h"   /* Provides: REGION manipulation functions  */
 #include "player/clip.h"     /* Provides: clip function                  */
@@ -42,7 +43,6 @@
 #include "player/defaults.h" /* Provides: default settings               */
 #include "player/record.h"   /* Provides: parameter mechanism            */
 #include "player/meta.h"     /* Provides: record interpreters            */
-#include <stdint.h>
 
 /**
  * @internal
