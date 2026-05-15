@@ -3504,6 +3504,9 @@ static int meta_delete (wmfAPI* API,wmfRecord* Record)
 	else if (obj->type == OBJ_REGION)
 	{	wmf_free (API,obj->obj.rgn.rects);
 	}
+	else if (obj->type == OBJ_FONT)
+	{	wmf_free (API,obj->obj.font.lfFaceName);
+	}
 
 	obj->type = 0;
 
