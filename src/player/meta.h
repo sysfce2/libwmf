@@ -903,7 +903,7 @@ static int meta_polygons (wmfAPI* API,wmfRecord* Record)
 			if (ERR (API)) break;
 		}
 	}
-	int too_short = Record->size < 1 + polypoly.npoly + 2 * num_pars;
+	int too_short = Record->size < 1 + polypoly.npoly + 2 * (uint64_t) num_pars;
 	if (skip_record || too_short)
 	{	if (too_short)
 		{	WMF_ERROR (API,"Bad record - too few parameters for polypolygon!");
@@ -930,11 +930,14 @@ static int meta_polygons (wmfAPI* API,wmfRecord* Record)
 
 		scope = (float) (MAX (WMF_PEN_WIDTH (pen),WMF_PEN_HEIGHT (pen))) / 2;
 
+		unsigned long ipt;
 		index = 1 + polypoly.npoly;
-		for (i = 0; i < num_pars; i++)
+		for (ipt = 0; ipt < num_pars; ipt++)
 		{	par_U16_x = ParU16 (API,Record,index);
+			if (ERR (API)) break;
 			index++;
 			par_U16_y = ParU16 (API,Record,index);
+			if (ERR (API)) break;
 			index++;
 			l_pt = L_Coord (par_U16_x,par_U16_y);
 			d_pt = wmf_D_Coord_translate (API,l_pt);
