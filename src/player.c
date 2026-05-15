@@ -474,6 +474,10 @@ static wmf_error_t WmfPlayMetaFile (wmfAPI* API)
 		Size     = wmf_read_32 (API,0,0);
 		Function = wmf_read_16 (API);
 
+		/* Propagate any current error from the size/function reads as-ism
+		 * so the cleanup at the end of the loop can recognise it. */
+		if (ERR (API)) break;
+
 		if ((Size == 3) && (Function == 0))
 		{	if (SCAN (API)) wmf_write (API, Size, Function, "empty",
 					atts->atts, 0, 0);
