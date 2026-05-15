@@ -2833,8 +2833,13 @@ static int meta_text (wmfAPI* API,wmfRecord* Record)
 		}
 		else
 		{	par_U16 = ParU16 (API,&str_record,i/2);
+			if (ERR (API)) break;
 			drawtext.str[i] =  par_U16 & 0xff;
 		}
+	}
+	if (ERR (API))
+	{	WMF_DEBUG (API,"bailing...");
+		return (changed);
 	}
 	drawtext.str[length] = '\0';
 
@@ -2855,7 +2860,12 @@ static int meta_text (wmfAPI* API,wmfRecord* Record)
 		l_width = 0;
 		for (i = 0; i < length; i++)
 		{	lpDx[i] = ParU16 (API,&lpDx_record,i);
+			if (ERR (API)) break;
 			l_width += lpDx[i];
+		}
+		if (ERR (API))
+		{	WMF_DEBUG (API,"bailing...");
+			return (changed);
 		}
 
 		l_pt = L_Coord (0,0);
@@ -3341,6 +3351,7 @@ static int meta_font_create (wmfAPI* API,wmfRecord* Record)
 	obj_font->type = OBJ_FONT;
 
 	font = &(obj_font->obj.font);
+	font->lfFaceName = 0;
 
 	if (SCAN (API) && DIAG (API))
 	{	fprintf (stderr,"\t[0x%04x]",Record->function);
@@ -3402,8 +3413,13 @@ static int meta_font_create (wmfAPI* API,wmfRecord* Record)
 		}
 		else
 		{	par_U16 = ParU16 (API,&name_record,i/2);
+			if (ERR (API)) break;
 			fontname[i] = par_U16 & 0xff;
 		}
+	}
+	if (ERR (API))
+	{	WMF_DEBUG (API,"bailing...");
+		return (changed);
 	}
 	fontname[length] = '\0';
 
