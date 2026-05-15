@@ -268,7 +268,7 @@ int wmf_mem_read (void* user_data)
 int wmf_mem_seek (void* user_data,long pos)
 {	wmfBBufMemInfo* mem_info = (wmfBBufMemInfo*) user_data;
 
-	if ((pos < 0) || (pos >= mem_info->length)) return (-1);
+	if ((pos < 0) || (pos > mem_info->length)) return (-1);
 
 	mem_info->ptr = mem_info->mem + pos;
 	mem_info->pos = pos;
