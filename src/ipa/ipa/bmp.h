@@ -1039,6 +1039,12 @@ static void ReadBMPImage (wmfAPI* API,wmfBMP* bmp,BMPSource* src)
 	}
 	else
 	{	/* Microsoft Windows BMP image file. */
+		if (bmp_info.size < 40)
+		{	WMF_ERROR (API,"BMP has invalid info-header size");
+			API->err = wmf_E_BadFormat;
+			return;
+		}
+
 		bmp_info.width  = ReadBlobLSBSignedLong (src);
 		bmp_info.height = ReadBlobLSBSignedLong (src);
 		bmp_info.planes = ReadBlobLSBShort (src);
@@ -1055,7 +1061,9 @@ static void ReadBMPImage (wmfAPI* API,wmfBMP* bmp,BMPSource* src)
 
 		bmp_info.colors_important = ReadBlobLSBLong (src);
 
-		for (u = 0; u < (bmp_info.size - 40); u++) ReadBlobByte (src);
+		for (u = 0; u < (bmp_info.size - 40); u++)
+		{	if (ReadBlobByte (src) == EOF) break;
+		}
 
 		if ( (bmp_info.compression == 3)
 		  && ((bmp_info.bits_per_pixel == 16) || (bmp_info.bits_per_pixel == 32)) )
