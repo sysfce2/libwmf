@@ -2557,12 +2557,7 @@ static int meta_dc_restore (wmfAPI* API,wmfRecord* Record)
 
 	if (PLAY (API) && FR->udata_free) FR->udata_free (API,&userdata);
 
-	clip = (wmfRegion*) P->dc->clip;
-
-	wmf_free (API,clip->rects);
-
-	wmf_free (API,P->dc->clip);
-	wmf_free (API,P->dc);
+	dc_free (API,P->dc);
 
 	P->dc = dc_stack_pop (API);
 

@@ -193,6 +193,19 @@ static void dc_stack_push (wmfAPI* API,wmfDC* dc)
 	P->dc_stack_length++;
 }
 
+static void dc_free (wmfAPI* API,wmfDC* dc)
+{	wmfRegion* clip;
+
+	if (dc == 0) return;
+
+	clip = (wmfRegion*) dc->clip;
+
+	if (clip) wmf_free (API,clip->rects);
+
+	wmf_free (API,dc->clip);
+	wmf_free (API,dc);
+}
+
 static wmfDC* dc_stack_pop (wmfAPI* API)
 {	wmfPlayer_t* P = (wmfPlayer_t*) API->player_data;
 
@@ -213,7 +226,7 @@ static void dc_stack_free (wmfAPI* API)
 
 	while (P->dc_stack_length)
 	{	P->dc_stack_length--;
-		wmf_free (API,P->dc_stack[P->dc_stack_length]);
+		dc_free (API,P->dc_stack[P->dc_stack_length]);
 	}
 
 	wmf_free (API,P->dc_stack);
