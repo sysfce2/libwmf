@@ -159,6 +159,9 @@ static void Clipping (wmfAPI*,wmfRegion*,wmfRegion*,wmfD_Rect*,U16);
  */
 static wmfDC* dc_copy (wmfAPI*,wmfDC*);
 
+static void dc_deselect_object (wmfAPI*,wmfDC*,wmfObject*);
+static void dc_release_object (wmfAPI*,wmfObject*);
+
 static void   dc_stack_push (wmfAPI*,wmfDC*);
 static wmfDC* dc_stack_pop (wmfAPI*);
 static void   dc_stack_free (wmfAPI*);

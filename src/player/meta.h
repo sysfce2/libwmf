@@ -3511,6 +3511,8 @@ static int meta_delete (wmfAPI* API,wmfRecord* Record)
 	{	wmf_free (API,obj->obj.font.lfFaceName);
 	}
 
+	dc_release_object (API,obj);
+
 	obj->type = 0;
 
 	return (changed);

@@ -129,6 +129,31 @@ static wmfDC* dc_copy (wmfAPI* API,wmfDC* dc)
 	return (dc_new);
 }
 
+/* Point a device context that selects this object slot at the player's default pen, brush and font.
+   The three share one union, so the slot has a single address whichever type it holds.
+ */
+static void dc_deselect_object (wmfAPI* API,wmfDC* dc,wmfObject* obj)
+{	wmfPlayer_t* P = (wmfPlayer_t*) API->player_data;
+
+	if (dc == 0) return;
+
+	if (dc->brush == &(obj->obj.brush)) WMF_DC_SET_BRUSH (dc,&(P->default_brush));
+	if (dc->pen   == &(obj->obj.pen  )) WMF_DC_SET_PEN   (dc,&(P->default_pen  ));
+	if (dc->font  == &(obj->obj.font )) WMF_DC_SET_FONT  (dc,&(P->default_font ));
+}
+
+/* Clear the object slot from every device context, the current one and the saved ones.
+ */
+static void dc_release_object (wmfAPI* API,wmfObject* obj)
+{	wmfPlayer_t* P = (wmfPlayer_t*) API->player_data;
+
+	int i;
+
+	dc_deselect_object (API,P->dc,obj);
+
+	for (i = 0; i < P->dc_stack_length; i++) dc_deselect_object (API,P->dc_stack[i],obj);
+}
+
 static void dc_stack_push (wmfAPI* API,wmfDC* dc)
 {	wmfPlayer_t* P = (wmfPlayer_t*) API->player_data;
 
