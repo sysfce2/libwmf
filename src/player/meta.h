@@ -986,7 +986,7 @@ static int meta_polygons (wmfAPI* API,wmfRecord* Record)
 				return (changed);
 			}
 
-			polypoly_construct (API, &polypoly, &polyline, 0);
+			polypoly_construct (&polypoly, &polyline);
 
 			if (polyline.count > 2) FR->draw_polygon (API,&polyline);
 
@@ -1075,42 +1075,60 @@ static void polypoly_append_points (wmfPolyPoly_t* polypoly,wmfPolyLine_t* polyl
 	}
 }
 
-static void polypoly_construct (wmfAPI* API,wmfPolyPoly_t* polypoly,wmfPolyLine_t* polyline,U16 ipoly)
-{	U16 count;
+/* Join the polygons into one polyline. Each polygon opens at its first point, steps out to the next
+ * polygon at the point nearest to it, and is closed again on the way back.
+ */
+static void polypoly_construct (wmfPolyPoly_t* polypoly,wmfPolyLine_t* polyline)
+{	U16 ipoly;
+	U16 opened = 0;
+	U16 count;
 	U16 closest;
 	U16 last;
 
 	if ((polyline->pt == 0) || (polypoly->pt == 0)) return; /* erk!! */
 
-	count = polypoly_point_count (polypoly,ipoly);
+	for (ipoly = 0; ipoly < polypoly->npoly; ipoly++)
+	{	count = polypoly_point_count (polypoly,ipoly);
 
-	if (count == 0) return;
+		if (count == 0) break;
 
-	last = 0;
-	if (ipoly < (polypoly->npoly - 1))
-	{	if ((polypoly->pt[ipoly+1] == 0) || (polypoly->count[ipoly+1] < 3))
-		{	last = 1; /* erk!! */
+		last = 0;
+		if (ipoly < (polypoly->npoly - 1))
+		{	if ((polypoly->pt[ipoly+1] == 0) || (polypoly->count[ipoly+1] < 3))
+			{	last = 1; /* erk!! */
+			}
 		}
-	}
-	else
-	{	last = 1; /* last poly, yay! */
+		else
+		{	last = 1; /* last poly, yay! */
+		}
+
+		if (last)
+		{	polypoly_append_points (polypoly,polyline,ipoly,0,count);
+			polypoly_append_points (polypoly,polyline,ipoly,0,1);
+
+			break;
+		}
+
+		closest = polypoly_closest_point (polypoly,ipoly,count);
+
+		polypoly_append_points (polypoly,polyline,ipoly,0,(U16) (closest + 1));
+
+		opened++;
 	}
 
-	if (last)
-	{	polypoly_append_points (polypoly,polyline,ipoly,0,count);
+	/* Close the polygons that were stepped out of, innermost first.
+	 */
+	while (opened > 0)
+	{	opened--;
+
+		ipoly = opened;
+
+		count   = polypoly_point_count (polypoly,ipoly);
+		closest = polypoly_closest_point (polypoly,ipoly,count);
+
+		polypoly_append_points (polypoly,polyline,ipoly,closest,count);
 		polypoly_append_points (polypoly,polyline,ipoly,0,1);
-
-		return;
 	}
-
-	closest = polypoly_closest_point (polypoly,ipoly,count);
-
-	polypoly_append_points (polypoly,polyline,ipoly,0,(U16) (closest + 1));
-
-	polypoly_construct (API, polypoly, polyline, (U16)(ipoly + 1));
-
-	polypoly_append_points (polypoly,polyline,ipoly,closest,count);
-	polypoly_append_points (polypoly,polyline,ipoly,0,1);
 }
 
 static int meta_round (wmfAPI* API,wmfRecord* Record)
