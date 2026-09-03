@@ -1018,54 +1018,34 @@ static int meta_polygons (wmfAPI* API,wmfRecord* Record)
 	return (changed);
 }
 
-static void polypoly_construct (wmfAPI* API,wmfPolyPoly_t* polypoly,wmfPolyLine_t* polyline,U16 ipoly)
+/* The number of points to use from polygon ipoly, ignoring a repeat of the first point at the end.
+ * 0 means the polygon is too small to draw.
+ */
+static U16 polypoly_point_count (wmfPolyPoly_t* polypoly,U16 ipoly)
 {	U16 count = polypoly->count[ipoly];
-	U16 i;
-	U16 imin;
-	U16 last;
+
+	if ((polypoly->pt[ipoly] == 0) || (count < 3)) return (0);
+
+	while ((polypoly->pt[ipoly][0].x == polypoly->pt[ipoly][count-1].x)
+	    && (polypoly->pt[ipoly][0].y == polypoly->pt[ipoly][count-1].y))
+	{	count--;
+		if (count < 3) return (0);
+	}
+
+	return (count);
+}
+
+/* The point of polygon ipoly nearest to the first point of polygon ipoly+1. [TODO: improve this??]
+ */
+static U16 polypoly_closest_point (wmfPolyPoly_t* polypoly,U16 ipoly,U16 count)
+{	U16 i;
+	U16 closest = 0;
 
 	double x2;
 	double y2;
 	double r2;
 	double r2_min = 0;
 
-	if ((polyline->pt == 0) || (polypoly->pt == 0)) return; /* erk!! */
-
-	if ((polypoly->pt[ipoly] == 0) || (polypoly->count[ipoly] < 3)) return;
-
-	while ((polypoly->pt[ipoly][0].x == polypoly->pt[ipoly][count-1].x)
-	    && (polypoly->pt[ipoly][0].y == polypoly->pt[ipoly][count-1].y))
-	{
-		count--;
-		if (count < 3) break;
-	}
-	if (count < 3) return;
-
-	last = 0;
-	if (ipoly < (polypoly->npoly - 1))
-	{	if ((polypoly->pt[ipoly+1] == 0) || (polypoly->count[ipoly+1] < 3))
-		{	last = 1; /* erk!! */
-		}
-	}
-	else
-	{	last = 1; /* last poly, yay! */
-	}
-	if (last)
-	{	for (i = 0; i < count; i++)
-		{	polyline->pt[polyline->count].x = polypoly->pt[ipoly][i].x;
-			polyline->pt[polyline->count].y = polypoly->pt[ipoly][i].y;
-			polyline->count++;
-		}
-		polyline->pt[polyline->count].x = polypoly->pt[ipoly][0].x;
-		polyline->pt[polyline->count].y = polypoly->pt[ipoly][0].y;
-		polyline->count++;
-
-		return;
-	}
-
-	/* find polygon point closest to point 0 in next polygon [TODO: improve this??]
-	 */
-	imin = 0;
 	for (i = 0; i < count; i++)
 	{	x2 = (double) polypoly->pt[ipoly][i].x - (double) polypoly->pt[ipoly+1][0].x;
 		x2 *= x2;
@@ -1077,26 +1057,60 @@ static void polypoly_construct (wmfAPI* API,wmfPolyPoly_t* polypoly,wmfPolyLine_
 		}
 		else if (r2 < r2_min)
 		{	r2_min = r2;
-			imin = i;
+			closest = i;
 		}
 	}
 
-	for (i = 0; i <= imin; i++)
-	{	polyline->pt[polyline->count].x = polypoly->pt[ipoly][i].x;
-		polyline->pt[polyline->count].y = polypoly->pt[ipoly][i].y;
+	return (closest);
+}
+
+/* Append points first up to but not including end of polygon ipoly to the polyline.
+ */
+static void polypoly_append_points (wmfPolyPoly_t* polypoly,wmfPolyLine_t* polyline,U16 ipoly,U16 first,U16 end)
+{	U16 i;
+
+	for (i = first; i < end; i++)
+	{	polyline->pt[polyline->count] = polypoly->pt[ipoly][i];
 		polyline->count++;
 	}
+}
+
+static void polypoly_construct (wmfAPI* API,wmfPolyPoly_t* polypoly,wmfPolyLine_t* polyline,U16 ipoly)
+{	U16 count;
+	U16 closest;
+	U16 last;
+
+	if ((polyline->pt == 0) || (polypoly->pt == 0)) return; /* erk!! */
+
+	count = polypoly_point_count (polypoly,ipoly);
+
+	if (count == 0) return;
+
+	last = 0;
+	if (ipoly < (polypoly->npoly - 1))
+	{	if ((polypoly->pt[ipoly+1] == 0) || (polypoly->count[ipoly+1] < 3))
+		{	last = 1; /* erk!! */
+		}
+	}
+	else
+	{	last = 1; /* last poly, yay! */
+	}
+
+	if (last)
+	{	polypoly_append_points (polypoly,polyline,ipoly,0,count);
+		polypoly_append_points (polypoly,polyline,ipoly,0,1);
+
+		return;
+	}
+
+	closest = polypoly_closest_point (polypoly,ipoly,count);
+
+	polypoly_append_points (polypoly,polyline,ipoly,0,(U16) (closest + 1));
 
 	polypoly_construct (API, polypoly, polyline, (U16)(ipoly + 1));
 
-	for (i = imin; i < count; i++)
-	{	polyline->pt[polyline->count].x = polypoly->pt[ipoly][i].x;
-		polyline->pt[polyline->count].y = polypoly->pt[ipoly][i].y;
-		polyline->count++;
-	}
-	polyline->pt[polyline->count].x = polypoly->pt[ipoly][0].x;
-	polyline->pt[polyline->count].y = polypoly->pt[ipoly][0].y;
-	polyline->count++;
+	polypoly_append_points (polypoly,polyline,ipoly,closest,count);
+	polypoly_append_points (polypoly,polyline,ipoly,0,1);
 }
 
 static int meta_round (wmfAPI* API,wmfRecord* Record)

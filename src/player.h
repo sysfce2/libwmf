@@ -216,6 +216,9 @@ static int meta_palette_create (wmfAPI*);
 static int meta_delete (wmfAPI*,wmfRecord*);
 static int meta_unused (wmfAPI*,wmfRecord*);
 
+static U16  polypoly_point_count (wmfPolyPoly_t*,U16);
+static U16  polypoly_closest_point (wmfPolyPoly_t*,U16,U16);
+static void polypoly_append_points (wmfPolyPoly_t*,wmfPolyLine_t*,U16,U16,U16);
 static void polypoly_construct (wmfAPI*,wmfPolyPoly_t*,wmfPolyLine_t*,U16);
 
 static void diagnose_object (wmfAPI*,unsigned int,wmfObject*);
