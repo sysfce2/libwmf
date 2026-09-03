@@ -517,6 +517,7 @@ wmfBMP wmf_ipa_bmp_copy (wmfAPI* API,wmfBMP* bmp,unsigned int width,unsigned int
 
 	unsigned int i;
 	unsigned int j;
+	unsigned int bytes_per_line;
 
 	int opacity;
 
@@ -532,6 +533,21 @@ wmfBMP wmf_ipa_bmp_copy (wmfAPI* API,wmfBMP* bmp,unsigned int width,unsigned int
 	if (bmp->data == 0) return (copy);
 
 	data = (BMPData*) bmp->data;
+
+	if ((width == 0) || (height == 0) || (data->bits_per_pixel == 0)
+	 || (width > (UINT_MAX - 31) / data->bits_per_pixel))
+	{	WMF_ERROR (API,"BMP copy dimensions too large");
+		API->err = wmf_E_BadFormat;
+		return (copy);
+	}
+
+	bytes_per_line = 4 * ((width * data->bits_per_pixel + 31) / 32);
+
+	if (bytes_per_line > UINT_MAX / height)
+	{	WMF_ERROR (API,"BMP copy dimensions too large");
+		API->err = wmf_E_BadFormat;
+		return (copy);
+	}
 
 	copy.data = wmf_malloc (API,sizeof (BMPData));
 
@@ -560,9 +576,9 @@ wmfBMP wmf_ipa_bmp_copy (wmfAPI* API,wmfBMP* bmp,unsigned int width,unsigned int
 
 	copy_data->bits_per_pixel = data->bits_per_pixel;
 
-	copy_data->bytes_per_line = 4 * ((width * copy_data->bits_per_pixel + 31) / 32);
+	copy_data->bytes_per_line = bytes_per_line;
 
-	size = height * copy_data->bytes_per_line * sizeof (unsigned char);
+	size = (size_t) bytes_per_line * height;
 
 	copy_data->image = (unsigned char*) wmf_malloc (API,size);
 
