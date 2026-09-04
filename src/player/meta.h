@@ -1619,6 +1619,7 @@ static int meta_rgn_create (wmfAPI* API,wmfRecord* Record)
 	U16 count;
 
 	unsigned long max_index;
+	unsigned long total_rectangles;
 
 	objects = P->objects;
 
@@ -1671,6 +1672,7 @@ static int meta_rgn_create (wmfAPI* API,wmfRecord* Record)
 
 	end = OffsetRecord (API,Record,10);
 	max_index = 10;
+	total_rectangles = 0;
 	for (band = 0; band < num_band; band++)
 	{	max_index++;
 		if (SCAN (API) && DIAG (API))
@@ -1688,6 +1690,17 @@ static int meta_rgn_create (wmfAPI* API,wmfRecord* Record)
 		}
 
 		num_pair = count >> 1;
+
+/* Each rectangle is merged into the region on its own, and a merge reads the whole region, so the
+ * time taken grows with the square of this total.
+ */
+		total_rectangles += num_pair;
+
+		if (total_rectangles > 1024)
+		{	WMF_ERROR (API,"Region rectangle limit exceeded!");
+			API->err = wmf_E_BadFormat;
+			break;
+		}
 
 		max_index += count + 3;
 		if (SCAN (API) && DIAG (API))
@@ -1713,7 +1726,11 @@ static int meta_rgn_create (wmfAPI* API,wmfRecord* Record)
 
 			WmfSetRectRgn (&temp_region,&d_r);
 			WmfCombineRgn (API,region,region,&temp_region,RGN_OR);
+
+			if (ERR (API)) break;
 		}
+
+		if (ERR (API)) break;
 	}
 
 	wmf_free (API,temp_region.rects);
