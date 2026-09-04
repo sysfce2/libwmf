@@ -1635,8 +1635,6 @@ static int meta_rgn_create (wmfAPI* API,wmfRecord* Record)
 	oid_region = i;
 	obj_region = objects + oid_region;
 
-	obj_region->type = OBJ_REGION;
-
 	region = &(obj_region->obj.rgn);
 
 	region->rects = (wmfD_Rect*) wmf_malloc (API,8 * sizeof (wmfD_Rect));
@@ -1648,6 +1646,8 @@ static int meta_rgn_create (wmfAPI* API,wmfRecord* Record)
 	}
 
 	WmfSetRectRgn (region,0);
+
+	obj_region->type = OBJ_REGION;
 
 	if (SCAN (API) && DIAG (API))
 	{	fprintf (stderr,"\t[0x%04x]",Record->function);
@@ -2590,6 +2590,11 @@ static int meta_dc_save (wmfAPI* API,wmfRecord* Record) /* complete ?? */
 	}
 
 	dc_stack_push (API,P->dc);
+
+	if (ERR (API))
+	{	WMF_DEBUG (API,"bailing...");
+		return (changed);
+	}
 
 	P->dc = dc_copy (API,P->dc);
 
