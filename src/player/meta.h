@@ -870,7 +870,7 @@ static int meta_polygons (wmfAPI* API,wmfRecord* Record)
 	{	fprintf (stderr,",%lu",(unsigned long) polypoly.npoly);
 	}
 
-	polypoly.pt = (wmfD_Coord**) wmf_malloc (API, polypoly.npoly * sizeof (wmfD_Coord*));
+	polypoly.pt = (wmfD_Coord**) wmf_calloc (API, polypoly.npoly, sizeof (wmfD_Coord*));
 
 	if (ERR (API))
 	{	WMF_DEBUG (API,"bailing...");
