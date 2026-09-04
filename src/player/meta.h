@@ -2219,6 +2219,11 @@ static int meta_dib_brush (wmfAPI* API,wmfRecord* Record)
 
 	bmp_record = OffsetRecord (API,Record,2);
 
+	if (ERR (API))
+	{	WMF_DEBUG (API,"bailing...");
+		return (changed);
+	}
+
 	pos_current = WMF_TELL (API);
 	if (pos_current < 0)
 	{	WMF_ERROR (API,"API's tell() failed on input stream!");
