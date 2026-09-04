@@ -99,6 +99,15 @@ static int meta_orgext (wmfAPI* API,wmfRecord* Record)
 	return (changed);
 }
 
+/* Returns the value clamped to the S32 range, so the conversion below is in range for whatever
+ * scale a metafile asks for.
+ */
+static S32 clamp_to_S32 (double value)
+{	if (value > (double) INT32_MAX) return ((S32) INT32_MAX);
+	if (value < (double) INT32_MIN) return ((S32) INT32_MIN);
+	return ((S32) value);
+}
+
 static int meta_scale (wmfAPI* API,wmfRecord* Record)
 {	int changed = 0;
 
@@ -138,13 +147,13 @@ static int meta_scale (wmfAPI* API,wmfRecord* Record)
 	switch (Record->function)
 	{
 	case META_SCALEWINDOWEXT:
-		P->dc->Window.width  = (S32) (((double) P->dc->Window.width  * x2) / x1);
-		P->dc->Window.height = (S32) (((double) P->dc->Window.height * y2) / y1);
+		P->dc->Window.width  = clamp_to_S32 (((double) P->dc->Window.width  * x2) / x1);
+		P->dc->Window.height = clamp_to_S32 (((double) P->dc->Window.height * y2) / y1);
 	break;
 
 	case META_SCALEVIEWPORTEXT:
-		P->Viewport_Width  = (S32) (((double) P->Viewport_Width  * x2) / x1);
-		P->Viewport_Height = (S32) (((double) P->Viewport_Height * y2) / y1);
+		P->Viewport_Width  = clamp_to_S32 (((double) P->Viewport_Width  * x2) / x1);
+		P->Viewport_Height = clamp_to_S32 (((double) P->Viewport_Height * y2) / y1);
 	break;
 
 	default:
