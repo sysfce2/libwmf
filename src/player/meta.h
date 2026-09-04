@@ -3399,7 +3399,8 @@ static int meta_font_create (wmfAPI* API,wmfRecord* Record)
 	par_S16_w = ParS16 (API,Record,1);
 	par_S16_h = ParS16 (API,Record,0);
 
-	WMF_FONT_SET_HEIGHT (font,ABS (par_S16_h));
+/* The height divides the width to give the text aspect ratio, so it stays at 1 or more. */
+	WMF_FONT_SET_HEIGHT (font,MAX (ABS (par_S16_h),1));
 	WMF_FONT_SET_WIDTH  (font,ABS (par_S16_w));
 
 	WMF_FONT_SET_ESCAPEMENT  (font,ParS16 (API,Record,2)); /* text angle */
