@@ -895,22 +895,12 @@ static int meta_polygons (wmfAPI* API,wmfRecord* Record)
 		{	WMF_DEBUG (API,"strange polygon in polypolygon list; skipping record...");
 			skip_record = 1;
 		}
-		if (skip_record)
-		{	polypoly.pt[i] = 0;
-		}
-		else
-		{	polypoly.pt[i] = (wmfD_Coord*) wmf_malloc (API, polypoly.count[i] * sizeof (wmfD_Coord));
-			if (ERR (API)) break;
-		}
 	}
 	int too_short = Record->size < 1 + polypoly.npoly + 2 * (uint64_t) num_pars;
 	if (skip_record || too_short)
 	{	if (too_short)
 		{	WMF_ERROR (API,"Bad record - too few parameters for polypolygon!");
 			API->err = wmf_E_BadFormat;
-		}
-		for (i = 0; i < polypoly.npoly; i++)
-		{	if (polypoly.pt[i]) wmf_free (API, polypoly.pt[i]);
 		}
 		wmf_free (API, polypoly.pt);
 		wmf_free (API, polypoly.count);
@@ -919,6 +909,17 @@ static int meta_polygons (wmfAPI* API,wmfRecord* Record)
 	if (ERR (API))
 	{	WMF_DEBUG (API,"bailing...");
 		return (changed);
+	}
+
+/* The record holds two parameters for every point, so the point arrays together
+ * are about twice the size of the record.
+ */
+	for (i = 0; i < polypoly.npoly; i++)
+	{	polypoly.pt[i] = (wmfD_Coord*) wmf_malloc (API, polypoly.count[i] * sizeof (wmfD_Coord));
+		if (ERR (API))
+		{	WMF_DEBUG (API,"bailing...");
+			return (changed);
+		}
 	}
 
 	if (SCAN (API) && DIAG (API))
